@@ -31,6 +31,7 @@ class UsersController {
     if (!user) {
       return res.status(404).send({ error: 'User not found' });
     }
+    console.log(user._id.toString());
     return res.status(200).json({ id: user._id.toString(), email: user.email });
   }
 }
