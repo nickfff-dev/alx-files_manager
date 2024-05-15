@@ -11,6 +11,8 @@ const mapRoutes = (app) => {
   app.get('/connect', AuthController.connect);
   app.get('/disconnect', AuthController.disconnect);
   app.post('/files', FilesController.postUpload);
+  app.get('/files/:id', FilesController.getShow);
+  app.get('/files', FilesController.getIndex);
 };
 
 export default mapRoutes;

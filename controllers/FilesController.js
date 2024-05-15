@@ -65,6 +65,51 @@ class FilesController {
       return res.status(500).send({ error: 'Internal Server Error' });
     }
   }
+
+  static async getShow(req, res) {
+    try {
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+
+      if (!userId) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const fileId = req.params.id;
+      const file = await dbClient.getFileById(fileId);
+
+      if (!file) {
+        return res.status(404).send({ error: 'Not found' });
+      }
+
+      return res.status(200).json(file);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
+
+  static async getIndex(req, res) {
+    try {
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+
+      if (!userId) {
+        return res.status(401).send({ error: 'Unauthorized' });
+      }
+
+      const { parentId = 0, page = 0 } = req.query;
+      const pageSize = 20;
+      const skip = page * pageSize;
+
+      const files = await dbClient.getFilesByParentIdAndPage(parentId, skip, pageSize);
+
+      return res.status(200).json(files);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).send({ error: 'Internal Server Error' });
+    }
+  }
 }
 
 module.exports = FilesController;

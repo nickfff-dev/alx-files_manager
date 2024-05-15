@@ -55,6 +55,26 @@ class DBClient {
     const newFile = await collection.insertOne(fileData);
     return { id: newFile.insertedId, ...fileData };
   }
+
+  async getFileById(fileId) {
+    const db = this.client.db(this.database);
+    const collection = db.collection('files');
+    const files = await collection.find({}).toArray();
+    const file = files.find((file) => file._id.toString() === fileId);
+    return file;
+  }
+
+  async getFilesByParentIdAndPage(parentId, skip, pageSize) {
+    const db = this.client.db(this.database);
+    const collection = db.collection('files');
+    const pipeline = [
+      { $match: { parentId } },
+      { $skip: skip },
+      { $limit: pageSize },
+    ];
+    const files = await collection.aggregate(pipeline).toArray();
+    return files;
+  }
 }
 
 const dbClient = new DBClient();
