@@ -48,6 +48,13 @@ class DBClient {
     const newUser = await collection.insertOne({ email, password });
     return { id: newUser.insertedId, email };
   }
+
+  async createFile(fileData) {
+    const db = this.client.db(this.database);
+    const collection = db.collection('files');
+    const newFile = await collection.insertOne(fileData);
+    return { id: newFile.insertedId, ...fileData };
+  }
 }
 
 const dbClient = new DBClient();
