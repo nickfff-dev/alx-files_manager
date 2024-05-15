@@ -1,11 +1,5 @@
-import crypto from 'crypto';
 import dbClient from '../utils/db';
-
-function hashPassword(password) {
-  return crypto.createHash('sha1')
-    .update(password, 'utf-8')
-    .digest('hex');
-};
+import hashPassword from '../utils/hshpw';
 
 class UsersController {
   static async postNew(req, res) {
