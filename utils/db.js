@@ -27,10 +27,18 @@ class DBClient {
     return filesCount;
   }
 
-  async getUser(email) {
+  async getUserByEmail(email) {
     const db = this.client.db(this.database);
     const collection = db.collection('users');
     const user = await collection.findOne({ email });
+    return user;
+  }
+
+  async getUserById(userId) {
+    const db = this.client.db(this.database);
+    const collection = db.collection('users');
+    const users = await collection.find({}).toArray();
+    const user = users.find((user) => user._id.toString() === userId);
     return user;
   }
 
