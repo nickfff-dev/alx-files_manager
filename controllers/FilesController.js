@@ -73,7 +73,6 @@ class FilesController {
     };
 
     const result = await dbClient.createFile(fileData);
-    console.log(result);
     if (!result) {
       return res.status(400).send({ error: 'Parent not found' });
     }
