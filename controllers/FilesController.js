@@ -74,7 +74,7 @@ class FilesController {
         localPath = path.join(folderPath, `${name}`);
       }
       if (!existsSync(localPath)) {
-        mkdirSync(localPath, {r});
+        mkdirSync(localPath);
       }
     }
     const fileData = {
