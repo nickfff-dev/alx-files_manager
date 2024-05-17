@@ -1,11 +1,12 @@
 import { MongoClient } from 'mongodb';
+import mongoDBCore from 'mongodb/lib/core';
 
 class DBClient {
   constructor() {
     const host = process.env.DB_HOST || 'localhost';
     const port = process.env.DB_PORT || 27017;
-    this.database = process.env.DB_DATABASE || 'files_manager';
-    this.client = new MongoClient(`mongodb://${host}:${port}`, { useUnifiedTopology: true });
+    const database = process.env.DB_DATABASE || 'files_manager';
+    this.client = new MongoClient(`mongodb://${host}:${port}/${database}`, { useUnifiedTopology: true });
     this.client.connect();
   }
 
@@ -14,59 +15,45 @@ class DBClient {
   }
 
   async nbUsers() {
-    const db = this.client.db(this.database);
-    const collection = db.collection('users');
-    const docCount = await collection.countDocuments();
-    return docCount;
+    return this.client.db().collection('users').countDocuments();
   }
 
   async nbFiles() {
-    const db = this.client.db(this.database);
-    const collection = db.collection('files');
-    const filesCount = await collection.countDocuments();
-    return filesCount;
+    return this.client.db().collection('users').countDocuments();
   }
 
   async getUserByEmail(email) {
-    const db = this.client.db(this.database);
-    const collection = db.collection('users');
+    const collection = this.client.db().collection('users');
     const user = await collection.findOne({ email });
     return user;
   }
 
   async getUserById(userId) {
-    const db = this.client.db(this.database);
-    const collection = db.collection('users');
-    const users = await collection.find({}).toArray();
-    const user = users.find((user) => user._id.toString() === userId);
-    return user;
+    const collection = this.client.db().collection('users');
+    const user = await collection.findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
+    return user || null;
   }
 
   async createUser({ email, password }) {
-    const db = this.client.db(this.database);
-    const collection = db.collection('users');
+    const collection = this.client.db().collection('users');
     const newUser = await collection.insertOne({ email, password });
     return { id: newUser.insertedId, email };
   }
 
   async createFile(fileData) {
-    const db = this.client.db(this.database);
-    const collection = db.collection('files');
+    const collection = this.client.db().collection('users');
     const newFile = await collection.insertOne(fileData);
     return { id: newFile.insertedId, ...fileData };
   }
 
   async getFileById(fileId) {
-    const db = this.client.db(this.database);
-    const collection = db.collection('files');
-    const files = await collection.find({}).toArray();
-    const file = files.find((file) => file._id.toString() === fileId);
+    const collection = this.client.db().collection('files');
+    const file = await collection.findOne({ _id: new mongoDBCore.BSON.ObjectId(fileId) });
     return file;
   }
 
   async getFilesByParentIdAndPage(parentId, skip, pageSize) {
-    const db = this.client.db(this.database);
-    const collection = db.collection('files');
+    const collection = this.client.db().collection('files');
     const pipeline = [
       { $match: { parentId } },
       { $skip: skip },

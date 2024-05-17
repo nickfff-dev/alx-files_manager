@@ -1,21 +1,19 @@
 import { v4 as uuidv4 } from 'uuid';
+import sha1 from 'sha1';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
-import hashPassword from '../utils/hshpw';
 
 class AuthController {
   static async connect(req, res) {
     const authHeader = req.headers.authorization.split(' ')[1];
     const [email, password] = Buffer.from(authHeader, 'base64').toString().split(':');
-    const hashedPassword = hashPassword(password);
+
     const user = await dbClient.getUserByEmail(email);
 
-    if (!user) {
+    if (!user || (sha1(password) !== user.password)) {
       return res.status(401).send({ error: 'Unauthorized' });
     }
-    if (user.password !== hashedPassword) {
-      return res.status(401).send({ error: 'Unauthorized' });
-    }
+
     const token = uuidv4();
     await redisClient.set(`auth_${token}`, user._id.toString(), 86400);
     return res.status(200).json({ token });

@@ -1,5 +1,5 @@
+import sha1 from 'sha1';
 import dbClient from '../utils/db';
-import hashPassword from '../utils/hshpw';
 import redisClient from '../utils/redis';
 
 class UsersController {
@@ -15,8 +15,8 @@ class UsersController {
     if (existingUser) {
       return res.status(400).send({ error: 'Already exist' });
     }
-    const hash = hashPassword(password);
-    const newUser = await dbClient.createUser({ email, password: hash });
+
+    const newUser = await dbClient.createUser({ email, password: sha1(password) });
     return res.status(201).send({ id: newUser.id, email: newUser.email });
   }
 
@@ -31,7 +31,6 @@ class UsersController {
     if (!user) {
       return res.status(404).send({ error: 'User not found' });
     }
-    console.log(user._id.toString());
     return res.status(200).json({ id: user._id.toString(), email: user.email });
   }
 }
