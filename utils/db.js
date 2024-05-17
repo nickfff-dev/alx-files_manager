@@ -30,8 +30,8 @@ class DBClient {
 
   async getUserById(userId) {
     const collection = this.client.db().collection('users');
-    const user = await collection.findOne({ _id: new mongoDBCore.BSON.ObjectId(userId)});
-    return user;
+    const user = await collection.findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
+    return user || null;
   }
 
   async createUser({ email, password }) {
