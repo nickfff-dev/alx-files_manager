@@ -43,7 +43,10 @@ class DBClient {
   async createFile(fileData) {
     const collection = this.client.db().collection('users');
     const newFile = await collection.insertOne(fileData);
-    return { id: newFile.insertedId, ...fileData };
+    if (newFile.insertedId) {
+      return { ...fileData };
+    }
+    return null;
   }
 
   async getFileById(fileId) {

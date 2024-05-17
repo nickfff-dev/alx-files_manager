@@ -1,69 +1,91 @@
 // controllers/FilesController.js
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
+import { writeFile } from 'node:fs/promises';
+import { existsSync, mkdirSync } from 'node:fs';
 import path from 'path';
 import redisClient from '../utils/redis';
 import dbClient from '../utils/db';
 
 class FilesController {
   static async postUpload(req, res) {
-    try {
-      const token = req.headers['x-token'];
-      const userId = await redisClient.get(`auth_${token}`);
-
-      if (!userId) {
-        return res.status(401).send({ error: 'Unauthorized' });
-      }
-
-      const {
-        name, type, parentId, isPublic, data,
-      } = req.body;
-
-      if (!name) {
-        return res.status(400).send({ error: 'Missing name' });
-      }
-
-      if (!type || !['folder', 'file', 'image'].includes(type)) {
-        return res.status(400).send({ error: 'Missing type' });
-      }
-
-      let localPath;
-      if (type === 'file' || type === 'image') {
-        if (!data) {
-          return res.status(400).send({ error: 'Missing data' });
-        }
-        const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
-        localPath = path.join(folderPath, `${uuidv4()}`);
-        await new Promise((resolve, reject) => {
-          fs.writeFile(localPath, data, 'base64', (err) => {
-            if (err) {
-              reject(err);
-            }
-            resolve();
-          });
-        });
-      }
-
-      const fileData = {
-        userId,
-        name,
-        type,
-        isPublic: !!isPublic,
-        parentId: parentId || 0,
-        ...((type === 'file' || type === 'image') && { localPath }),
-      };
-
-      const result = await dbClient.createFile(fileData);
-
-      if (!result) {
-        return res.status(400).send({ error: 'Parent not found' });
-      }
-
-      return res.status(201).json(result);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).send({ error: 'Internal Server Error' });
+    const token = req.headers['x-token'];
+    const userId = await redisClient.get(`auth_${token}`);
+    const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
+    if (!existsSync(folderPath)) {
+      mkdirSync(folderPath);
     }
+    if (!userId) {
+      return res.status(401).send({ error: 'Unauthorized' });
+    }
+    if (!req.body.name) {
+      return res.status(400).send({ error: 'Missing name' });
+    }
+
+    if (!req.body.type || !['folder', 'file', 'image'].includes(req.body.type)) {
+      return res.status(400).send({ error: 'Missing type' });
+    }
+
+    const { name } = req.body;
+    const { type } = req.body;
+    const { data } = req.body;
+
+    let parentId = 0;
+    let isPublic = false;
+
+    if (Object.keys(req.body).includes('parentId')) {
+      parentId = req.body.parentId;
+      if (parentId !== 0) {
+        const parentFile = await dbClient.getFileById(parentId);
+        if (!parentFile) {
+          return res.status(400).send({ error: 'Parent not found' });
+        }
+        if (parentFile.type !== 'folder') {
+          return res.status(400).send({ error: 'Parent is not a folder' });
+        }
+      }
+    }
+
+    if (Object.keys(req.body).includes('isPublic')) {
+      isPublic = req.body.isPublic;
+    }
+
+    let localPath;
+    if (type === 'file' || type === 'image') {
+      if (!data) {
+        return res.status(400).send({ error: 'Missing data' });
+      }
+
+      localPath = path.join(folderPath, `${uuidv4()}`);
+      try {
+        await writeFile(localPath, data, { encoding: 'base64' });
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    const fileData = {
+      userId,
+      name,
+      type,
+      isPublic,
+      parentId,
+      ...((type === 'file' || type === 'image') && { localPath }),
+    };
+
+    const result = await dbClient.createFile(fileData);
+    console.log(result);
+    if (!result) {
+      return res.status(400).send({ error: 'Parent not found' });
+    }
+    const paylod = {
+      userId: result.userId,
+      name: result.name,
+      type: result.type,
+      isPublic: result.isPublic,
+      parentId: result.parentId,
+      id: result._id.toString(),
+    };
+    return res.status(201).json(paylod);
   }
 
   static async getShow(req, res) {
