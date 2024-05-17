@@ -30,8 +30,8 @@ class DBClient {
 
   async getUserById(userId) {
     const collection = this.client.db().collection('users');
-    const user = await collection.findOne({ _id: new mongoDBCore.BSON.ObjectId(userId) });
-    return user || null;
+    const user = await collection.findOne({ _id: new mongoDBCore.BSON.ObjectId(userId)});
+    return user;
   }
 
   async createUser({ email, password }) {
@@ -41,12 +41,9 @@ class DBClient {
   }
 
   async createFile(fileData) {
-    const collection = this.client.db().collection('users');
+    const collection = this.client.db().collection('files');
     const newFile = await collection.insertOne(fileData);
-    if (newFile.insertedId) {
-      return { ...fileData };
-    }
-    return null;
+    return { id: newFile._id, ...fileData };
   }
 
   async getFileById(fileId) {

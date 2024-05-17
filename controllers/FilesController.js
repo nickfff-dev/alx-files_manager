@@ -1,4 +1,4 @@
-// controllers/FilesController.js
+/* eslint-disable prefer-destructuring */
 import { v4 as uuidv4 } from 'uuid';
 import { writeFile } from 'node:fs/promises';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -25,23 +25,24 @@ class FilesController {
       return res.status(400).send({ error: 'Missing type' });
     }
 
-    const { name } = req.body;
-    const { type } = req.body;
-    const { data } = req.body;
+    const name = req.body.name;
+    const type = req.body.type;
+    const data = req.body.data;
 
     let parentId = 0;
     let isPublic = false;
-
+    let parentName = '';
     if (Object.keys(req.body).includes('parentId')) {
       parentId = req.body.parentId;
       if (parentId !== 0) {
-        const parentFile = await dbClient.getFileById(parentId);
+        const parentFile = await dbClient.getFileById(parentId.toString());
         if (!parentFile) {
           return res.status(400).send({ error: 'Parent not found' });
         }
         if (parentFile.type !== 'folder') {
           return res.status(400).send({ error: 'Parent is not a folder' });
         }
+        parentName = parentFile.name;
       }
     }
 
@@ -54,15 +55,28 @@ class FilesController {
       if (!data) {
         return res.status(400).send({ error: 'Missing data' });
       }
+      if (parentName !== '') {
+        localPath = path.join(folderPath, parentName, `${uuidv4()}`);
+      } else {
+        localPath = path.join(folderPath, `${uuidv4()}`);
+      }
 
-      localPath = path.join(folderPath, `${uuidv4()}`);
       try {
         await writeFile(localPath, data, { encoding: 'base64' });
       } catch (err) {
         console.log(err);
       }
     }
-
+    if (type === 'folder') {
+      if (parentName !== '') {
+        localPath = path.join(folderPath, parentName, `${name}`);
+      } else {
+        localPath = path.join(folderPath, `${name}`);
+      }
+      if (!existsSync(localPath)) {
+        mkdirSync(localPath, {r});
+      }
+    }
     const fileData = {
       userId,
       name,
@@ -73,8 +87,9 @@ class FilesController {
     };
 
     const result = await dbClient.createFile(fileData);
+
     if (!result) {
-      return res.status(400).send({ error: 'Parent not found' });
+      return res.status(400).send({ error: 'Error creating file' });
     }
     const paylod = {
       userId: result.userId,
