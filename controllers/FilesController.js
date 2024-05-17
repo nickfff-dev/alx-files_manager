@@ -1,4 +1,3 @@
-/* eslint-disable prefer-destructuring */
 import { v4 as uuidv4 } from 'uuid';
 import { writeFile } from 'node:fs/promises';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -25,9 +24,7 @@ class FilesController {
       return res.status(400).send({ error: 'Missing type' });
     }
 
-    const name = req.body.name;
-    const type = req.body.type;
-    const data = req.body.data;
+    const { name, type, data } = req.body;
 
     let parentId = 0;
     let isPublic = false;
