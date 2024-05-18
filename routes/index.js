@@ -11,7 +11,7 @@ function controllerRouting(app) {
   router.get('/status', (req, res) => {
     AppController.getStatus(req, res);
   });
-  
+
   router.get('/stats', (req, res) => {
     AppController.getStats(req, res);
   });
@@ -23,7 +23,6 @@ function controllerRouting(app) {
   router.get('/users/me', (req, res) => {
     UsersController.getMe(req, res);
   });
-
 
   router.get('/connect', (req, res) => {
     AuthController.getConnect(req, res);
@@ -44,7 +43,6 @@ function controllerRouting(app) {
   router.get('/files', (req, res) => {
     FilesController.getIndex(req, res);
   });
-
 
   router.put('/files/:id/publish', (req, res) => {
     FilesController.putPublish(req, res);

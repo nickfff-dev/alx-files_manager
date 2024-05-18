@@ -167,7 +167,6 @@ const fileUtils = {
     return { error: null, code: 200, updatedFile };
   },
 
-
   processFile(doc) {
     // Changes _id for id and removes localPath
 

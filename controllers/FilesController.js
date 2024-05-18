@@ -10,7 +10,6 @@ const FOLDER_PATH = process.env.FOLDER_PATH || '/tmp/files_manager';
 const fileQueue = new Queue('fileQueue');
 
 class FilesController {
- 
   static async postUpload(request, response) {
     const { userId } = await userUtils.getUserIdAndKey(request);
 
