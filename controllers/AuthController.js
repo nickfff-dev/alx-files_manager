@@ -4,7 +4,6 @@ import redisClient from '../utils/redis';
 import userUtils from '../utils/user';
 
 class AuthController {
-
   static async getConnect(request, response) {
     const Authorization = request.header('Authorization') || '';
 
